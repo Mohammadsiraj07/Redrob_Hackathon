@@ -892,15 +892,29 @@ def render_explainability(c_row):
 
 # ─── Data Loading ────────────────────────────────────────────────────────────
 
-uploaded_file = st.file_uploader("Upload candidates file (JSON or JSONL)", type=["json", "jsonl"])
-candidates_df = None
+# Initialize session state for raw candidate content and source
+if "raw_content" not in st.session_state:
+    st.session_state.raw_content = None
+if "data_source" not in st.session_state:
+    st.session_state.data_source = None
 
-# If no file uploaded, allow using the sample
+uploaded_file = st.file_uploader("Upload candidates file (JSON or JSONL)", type=["json", "jsonl"])
+
+# Handle file upload and clearing
 if uploaded_file is not None:
     content = uploaded_file.read().decode("utf-8")
-    with st.spinner("Processing candidates..."):
-        candidates_df = process_data(content, jd_text)
-else:
+    if st.session_state.raw_content != content or st.session_state.data_source != "upload":
+        st.session_state.raw_content = content
+        st.session_state.data_source = "upload"
+        st.rerun()
+elif st.session_state.data_source == "upload":
+    # User cleared the uploaded file
+    st.session_state.raw_content = None
+    st.session_state.data_source = None
+    st.rerun()
+
+# If no active data source, show landing page with option to load sample
+if st.session_state.raw_content is None:
     st.info("Upload a candidate profile file or load the 50 sample candidates below to test the UI.")
     if st.button("Load 50 Sample Candidates"):
         sample_path = Path("sample_candidates.jsonl")
@@ -910,10 +924,16 @@ else:
         if sample_path.exists():
             with open(sample_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            with st.spinner("Processing sample candidates..."):
-                candidates_df = process_data(content, jd_text)
+            st.session_state.raw_content = content
+            st.session_state.data_source = "sample"
+            st.rerun()
         else:
             st.error(f"Sample candidates file not found at {sample_path}")
+
+# Process data if raw content is present in session state
+candidates_df = None
+if st.session_state.raw_content is not None:
+    candidates_df = process_data(st.session_state.raw_content, jd_text)
 
 # ─── Dashboard Render (12-Column Layout Grid) ───────────────────────────────
 
