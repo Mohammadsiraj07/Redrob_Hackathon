@@ -430,6 +430,76 @@ def process_data(file_content, jd_input_text):
 
 # ─── UI Helper Renderers ─────────────────────────────────────────────────────
 
+def generate_table_html(df):
+    rows_html = ""
+    for _, row in df.iterrows():
+        rank = row.get("rank", 0)
+        cid = row.get("candidate_id", "N/A")
+        score = row.get("score_rounded", 0.0)
+        yoe = row.get("years_of_experience", 0.0)
+        company = row.get("current_company", "N/A")
+        if not company or str(company) == "nan":
+            company = "N/A"
+        notice = int(row.get("notice_period_days", 90))
+        is_hp = row.get("is_honeypot", False)
+        
+        # Determine Fit Category
+        if is_hp:
+            fit_cat = "Honeypot"
+            fit_class = "skill-missing"
+        elif score >= 0.75:
+            fit_cat = "Strong Fit"
+            fit_class = "skill-match"
+        elif score >= 0.65:
+            fit_cat = "Good Fit"
+            fit_class = "skill-transferable"
+        else:
+            fit_cat = "Keep in Pool"
+            fit_class = "skill-emerging"
+            
+        notice_txt = "Immediate" if notice <= 15 else f"{notice}d"
+        notice_class = "skill-match" if notice <= 30 else ("skill-transferable" if notice <= 60 else "skill-missing")
+        
+        rows_html += f"""
+        <tr>
+            <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #6366f1;">#{rank}</td>
+            <td style="font-weight: 600; color: #ffffff;">{cid}</td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #10b981;">{score:.2%}</span>
+                    <div style="background: rgba(255, 255, 255, 0.05); width: 60px; height: 4px; border-radius: 2px; overflow: hidden;">
+                        <div style="background: #10b981; width: {score * 100}%; height: 100%;"></div>
+                    </div>
+                </div>
+            </td>
+            <td>{yoe:.1f} yrs</td>
+            <td>{company}</td>
+            <td><span class="skill-chip {notice_class}" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">{notice_txt}</span></td>
+            <td><span class="skill-chip {fit_class}" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">{fit_cat}</span></td>
+        </tr>
+        """
+        
+    html = f"""
+    <table class="premium-table">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Candidate ID</th>
+                <th>Match Score</th>
+                <th>Experience</th>
+                <th>Current Company</th>
+                <th>Notice Period</th>
+                <th>Fit Category</th>
+            </tr>
+        </thead>
+        <tbody>
+            {rows_html}
+        </tbody>
+    </table>
+    """
+    return html
+
+
 def render_radial_svg(score: float, label: str, color: str = "#6366f1"):
     pct = int(score * 100)
     html = f"""
