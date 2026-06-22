@@ -995,13 +995,64 @@ if candidates_df is not None:
             if exclude_hp_display:
                 display_df = display_df[display_df["is_honeypot"] == False]
                 
-            # Show premium HTML data table
-            st.write(f"Showing {len(display_df)} candidates matching filters:")
-            table_html = generate_table_html(display_df.head(20)) # top 20 candidates
-            st.markdown(table_html.strip(), unsafe_allow_html=True)
+            # Reset page if filter values changed
+            if "last_loc_search" not in st.session_state:
+                st.session_state.last_loc_search = ""
+            if "last_exclude_hp" not in st.session_state:
+                st.session_state.last_exclude_hp = False
+                
+            if st.session_state.last_loc_search != loc_search or st.session_state.last_exclude_hp != exclude_hp_display:
+                st.session_state.current_page = 1
+                st.session_state.last_loc_search = loc_search
+                st.session_state.last_exclude_hp = exclude_hp_display
+
+            # Pagination logic: 10 candidates per page
+            candidates_per_page = 10
+            total_pages = math.ceil(len(display_df) / candidates_per_page)
             
-            if len(display_df) > 20:
-                st.info(f"Showing top 20 results. To analyze the remaining {len(display_df)-20} candidates, please use the location filter or selects above.")
+            if total_pages > 1:
+                if "current_page" not in st.session_state:
+                    st.session_state.current_page = 1
+                
+                if st.session_state.current_page > total_pages:
+                    st.session_state.current_page = total_pages
+                if st.session_state.current_page < 1:
+                    st.session_state.current_page = 1
+                    
+                start_idx = (st.session_state.current_page - 1) * candidates_per_page
+                end_idx = start_idx + candidates_per_page
+                page_df = display_df.iloc[start_idx:end_idx]
+                
+                st.write(f"Showing candidates {start_idx + 1} to {min(end_idx, len(display_df))} of {len(display_df)}:")
+                table_html = generate_table_html(page_df)
+                st.markdown(table_html.strip(), unsafe_allow_html=True)
+                
+                # Render Page Select Buttons side by side
+                st.write("")
+                cols_pag = st.columns(total_pages + 2)
+                
+                with cols_pag[0]:
+                    if st.button("◀ Prev", disabled=(st.session_state.current_page == 1), use_container_width=True):
+                        st.session_state.current_page -= 1
+                        st.rerun()
+                
+                for p in range(1, total_pages + 1):
+                    with cols_pag[p]:
+                        is_active = (p == st.session_state.current_page)
+                        btn_label = f"[{p}]" if is_active else f"{p}"
+                        if st.button(btn_label, type="primary" if is_active else "secondary", use_container_width=True):
+                            st.session_state.current_page = p
+                            st.rerun()
+                            
+                with cols_pag[total_pages + 1]:
+                    if st.button("Next ▶", disabled=(st.session_state.current_page == total_pages), use_container_width=True):
+                        st.session_state.current_page += 1
+                        st.rerun()
+            else:
+                st.session_state.current_page = 1
+                st.write(f"Showing all {len(display_df)} candidates:")
+                table_html = generate_table_html(display_df)
+                st.markdown(table_html.strip(), unsafe_allow_html=True)
                 
         elif "Analyzer" in nav_selection:
             st.subheader("Contextual Profile Analyzer")
