@@ -480,6 +480,7 @@ def generate_table_html(df):
         )
         
     html = (
+        f"<div style=\"width: 100%; overflow-x: auto;\">"
         f"<table class=\"premium-table\">"
         f"<thead>"
         f"<tr>"
@@ -496,6 +497,7 @@ def generate_table_html(df):
         f"{rows_html}"
         f"</tbody>"
         f"</table>"
+        f"</div>"
     )
     return html
 
@@ -917,7 +919,7 @@ else:
 
 if candidates_df is not None:
     # Desktop layout split: Col 1 = Left Rail, Col 2 = Center Main Workspace, Col 3 = Right Insights
-    col_rail, col_center, col_right = st.columns([2, 7, 3])
+    col_rail, col_center, col_right = st.columns([1.5, 7.5, 3])
 
     with col_rail:
         st.markdown('<div class="app-title" style="font-size:1.4rem;">Redrob AI</div>', unsafe_allow_html=True)
