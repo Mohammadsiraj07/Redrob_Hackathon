@@ -525,11 +525,15 @@ def render_radial_svg(score: float, label: str, color: str = "#6366f1"):
 
 
 def render_metric_card(label, value, border_color="#6366f1", subtext=""):
+    subtext_html = ""
+    if subtext:
+        subtext_html = f'<div style="font-family: \'Inter\', sans-serif; font-size: 0.75rem; color: #ef4444; margin-top: 4px; font-weight: 500;">{subtext}</div>'
+        
     html = f"""
     <div style="background: rgba(18, 29, 49, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid {border_color}; border-radius: 8px; padding: 16px; margin-bottom: 16px; backdrop-filter: blur(12px);">
         <div style="font-family: 'Inter', sans-serif; font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 0.05em;">{label}</div>
         <div style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 700; color: #ffffff; margin-top: 4px; line-height: 1.2;">{value}</div>
-        {f'<div style="font-family: \'Inter\', sans-serif; font-size: 0.75rem; color: #ef4444; margin-top: 4px; font-weight: 500;">{subtext}</div>' if subtext else ''}
+        {subtext_html}
     </div>
     """
     return html
