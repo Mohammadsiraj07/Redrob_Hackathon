@@ -69,7 +69,7 @@ $$Score = (SkillMatch \times 0.40) + (CareerQuality \times 0.25) + (Behavioral \
 * **Validator Results**: Full pipeline validation passed successfully.
 * **Top Rank Profile Breakdown**:
   * **Rank 1 (CAND_0018499)**: Senior ML Engineer with 7.2 years of experience at Zomato (Noida). Active on GitHub (94 activity score), immediate availability, active looking, and 20 JD-matched skills.
-  * **Rank 2 (CAND_0039754)**: Senior Applied Scientist with 16.2 years of experience at Meta. Notice period of 30 days, willing to relocate to Pune/Noida, 22 JD-matched skills.
+  * **Rank 2 (CAND_0042506)**: Search Engineer with 4.2 years of experience at verloop.io. Matched 20 core JD skills, immediately available, actively looking, active GitHub user (64 score), top platform assessment (74%). Based in Mumbai, Maharashtra.
 
 ---
 
