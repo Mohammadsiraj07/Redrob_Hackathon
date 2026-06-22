@@ -1064,38 +1064,34 @@ if candidates_df is not None:
                         fit_lbl = "Honeypot" if is_hp else ("Strong Fit" if score_pct >= 75 else "Good Fit")
                         fit_col = "#ef4444" if is_hp else ("#10b981" if score_pct >= 75 else "#3b82f6")
                         
-                        st.markdown(f"""
-                        <div class="glass-card" style="border-top: 4px solid {fit_col}; min-height: 500px;">
-                            <div style="font-family:'Outfit', sans-serif; font-size:1.3rem; font-weight:bold; color:#fff;">{c['candidate_id']}</div>
-                            <div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-top:2px;">{c['current_title']}</div>
-                            <div style="font-size:0.8rem; color:#94a3b8;">at {c['current_company'] or 'N/A'}</div>
-                            
-                            <div style="display:flex; justify-content:space-between; margin-top:20px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid var(--border-color);">
-                                <span style="font-size:0.8rem; color:#94a3b8;">Match Score</span>
-                                <span style="font-family:'JetBrains Mono',monospace; font-weight:bold; color:#fff; font-size:1.2rem;">{score_pct}%</span>
-                            </div>
-                            
-                            <div style="margin-top:16px;">
-                                <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Experience</div>
-                                <div style="font-size:0.9rem; color:#fff; font-weight:500;">{c['years_of_experience']:.1f} Years of Experience</div>
-                            </div>
-                            
-                            <div style="margin-top:16px;">
-                                <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Location</div>
-                                <div style="font-size:0.9rem; color:#fff; font-weight:500;">{c['location']}, {c['country']}</div>
-                            </div>
-                            
-                            <div style="margin-top:16px;">
-                                <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Notice Period</div>
-                                <div style="font-size:0.9rem; color:#fff; font-weight:500;">{int(c['notice_period_days'])} Days notice</div>
-                            </div>
-                            
-                            <div style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:16px;">
-                                <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:6px;">Summary Highlight</div>
-                                <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.45;">{c['reasoning'][:160]}...</div>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        comp_card_html = (
+                            f'<div class="glass-card" style="border-top: 4px solid {fit_col}; min-height: 500px;">'
+                            f'<div style="font-family:\'Outfit\', sans-serif; font-size:1.3rem; font-weight:bold; color:#fff;">{c["candidate_id"]}</div>'
+                            f'<div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-top:2px;">{c["current_title"]}</div>'
+                            f'<div style="font-size:0.8rem; color:#94a3b8;">at {c["current_company"] or "N/A"}</div>'
+                            f'<div style="display:flex; justify-content:space-between; margin-top:20px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid var(--border-color);">'
+                            f'<span style="font-size:0.8rem; color:#94a3b8;">Match Score</span>'
+                            f'<span style="font-family:\'JetBrains Mono\',monospace; font-weight:bold; color:#fff; font-size:1.2rem;">{score_pct}%</span>'
+                            f'</div>'
+                            f'<div style="margin-top:16px;">'
+                            f'<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Experience</div>'
+                            f'<div style="font-size:0.9rem; color:#fff; font-weight:500;">{c["years_of_experience"]:.1f} Years of Experience</div>'
+                            f'</div>'
+                            f'<div style="margin-top:16px;">'
+                            f'<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Location</div>'
+                            f'<div style="font-size:0.9rem; color:#fff; font-weight:500;">{c["location"]}, {c["country"]}</div>'
+                            f'</div>'
+                            f'<div style="margin-top:16px;">'
+                            f'<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Notice Period</div>'
+                            f'<div style="font-size:0.9rem; color:#fff; font-weight:500;">{int(c["notice_period_days"])} Days notice</div>'
+                            f'</div>'
+                            f'<div style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:16px;">'
+                            f'<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:6px;">Summary Highlight</div>'
+                            f'<div style="font-size:0.8rem; color:#cbd5e1; line-height:1.45;">{c["reasoning"][:160]}...</div>'
+                            f'</div>'
+                            f'</div>'
+                        )
+                        st.markdown(comp_card_html, unsafe_allow_html=True)
             else:
                 st.warning("Please select at least one candidate above to compare.")
 
