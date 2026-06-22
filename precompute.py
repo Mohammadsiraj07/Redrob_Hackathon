@@ -3,7 +3,7 @@ precompute.py — Convenience wrapper for Phase 1.
 Delegates to feature_extractor.py.
 
 Usage:
-    python precompute.py --candidates ./data/candidates.jsonl --out ./features.parquet
+    python precompute.py --candidates ./candidates.jsonl --out ./features.parquet
 """
 import argparse
 from src.feature_extractor import extract_features

@@ -3,10 +3,10 @@ rank.py — Single reproduce command entry point.
 Runs the full pipeline: feature extraction (if needed) then ranking.
 
 Usage:
-    python rank.py --candidates ./data/candidates.jsonl --out ./submission.csv
+    python rank.py --candidates ./candidates.jsonl --out ./submission.csv
     
     (Optional: skip pre-computation if features.parquet already exists)
-    python rank.py --candidates ./data/candidates.jsonl --out ./submission.csv --features ./features.parquet
+    python rank.py --candidates ./candidates.jsonl --out ./submission.csv --features ./features.parquet
 """
 import argparse
 import time
