@@ -926,6 +926,14 @@ if "saved_profiles" not in st.session_state:
     st.session_state.saved_profiles = set()
 if "compare_list" not in st.session_state:
     st.session_state.compare_list = []
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = "📊 Dashboard"
+if "redirect_to_tab" not in st.session_state:
+    st.session_state.redirect_to_tab = None
+
+if st.session_state.redirect_to_tab:
+    st.session_state.active_tab = st.session_state.redirect_to_tab
+    st.session_state.redirect_to_tab = None
 
 uploaded_file = st.file_uploader("Upload candidates file (JSON or JSONL)", type=["json", "jsonl"])
 
@@ -977,9 +985,6 @@ if candidates_df is not None:
     with col_rail:
         st.markdown('<div class="app-title" style="font-size:1.4rem;">Redrob AI</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.05em; margin-bottom:10px;">Workspace Menu</div>', unsafe_allow_html=True)
-        if "active_tab" not in st.session_state:
-            st.session_state.active_tab = "📊 Dashboard"
-            
         nav_selection = st.radio(
             "Navigation",
             options=["📊 Dashboard", "🔍 Analyzer", "⚔️ Comparison"],
@@ -1130,7 +1135,7 @@ if candidates_df is not None:
                             else:
                                 st.session_state.compare_list.append(c_row['candidate_id'])
                                 st.toast(f"Candidate {c_row['candidate_id']} added to comparison board!", icon="⚔️")
-                                st.session_state.active_tab = "⚔️ Comparison" # Programmatic redirect!
+                                st.session_state.redirect_to_tab = "⚔️ Comparison" # Programmatic redirect queue!
                         st.rerun()
                         
                 is_saved = c_row['candidate_id'] in st.session_state.saved_profiles
