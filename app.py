@@ -475,10 +475,18 @@ def generate_table_html(df):
         notice_txt = "Immediate" if notice <= 15 else f"{notice}d"
         notice_class = "skill-match" if notice <= 30 else ("skill-transferable" if notice <= 60 else "skill-missing")
         
+        is_saved = cid in st.session_state.get("saved_profiles", set())
+        is_short = cid in st.session_state.get("shortlisted", set())
+        status_icons = ""
+        if is_saved:
+            status_icons += ' <span style="color:#f59e0b;">⭐</span>'
+        if is_short:
+            status_icons += ' <span style="color:#10b981;">✓</span>'
+
         rows_html += (
             f"<tr>"
             f"<td style=\"font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #6366f1;\">#{rank}</td>"
-            f"<td style=\"font-weight: 600; color: #ffffff;\">{cid}</td>"
+            f"<td style=\"font-weight: 600; color: #ffffff;\">{cid}{status_icons}</td>"
             f"<td>"
             f"<div style=\"display: flex; align-items: center; gap: 8px;\">"
             f"<span style=\"font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #10b981;\">{score:.2%}</span>"
@@ -912,6 +920,12 @@ if "raw_content" not in st.session_state:
     st.session_state.raw_content = None
 if "data_source" not in st.session_state:
     st.session_state.data_source = None
+if "shortlisted" not in st.session_state:
+    st.session_state.shortlisted = set()
+if "saved_profiles" not in st.session_state:
+    st.session_state.saved_profiles = set()
+if "compare_list" not in st.session_state:
+    st.session_state.compare_list = []
 
 uploaded_file = st.file_uploader("Upload candidates file (JSON or JSONL)", type=["json", "jsonl"])
 
@@ -949,6 +963,8 @@ if st.session_state.raw_content is None:
 candidates_df = None
 if st.session_state.raw_content is not None:
     candidates_df = process_data(st.session_state.raw_content, jd_text)
+    if candidates_df is not None and not st.session_state.compare_list:
+        st.session_state.compare_list = candidates_df["candidate_id"].head(2).tolist()
 
 # ─── Dashboard Render (12-Column Layout Grid) ───────────────────────────────
 
@@ -1066,20 +1082,84 @@ if candidates_df is not None:
                 # 1. Candidate Header
                 st.markdown(render_candidate_header(c_row), unsafe_allow_html=True)
                 
-                # Action buttons side-by-side
+                # Action buttons side-by-side (fully interactive)
                 col_act1, col_act2, col_act3, col_act4 = st.columns(4)
+                
+                is_shortlisted = c_row['candidate_id'] in st.session_state.shortlisted
+                btn_shortlist_lbl = "✓ Shortlisted" if is_shortlisted else "✓ Shortlist"
                 with col_act1:
-                    if st.button("✓ Shortlist Candidate", use_container_width=True):
-                        st.toast(f"Candidate {c_row['candidate_id']} added to shortlist!", icon="✅")
+                    if st.button(btn_shortlist_lbl, use_container_width=True, type="primary" if is_shortlisted else "secondary"):
+                        if is_shortlisted:
+                            st.session_state.shortlisted.remove(c_row['candidate_id'])
+                            st.toast(f"Removed {c_row['candidate_id']} from shortlist.", icon="ℹ️")
+                        else:
+                            st.session_state.shortlisted.add(c_row['candidate_id'])
+                            st.toast(f"Candidate {c_row['candidate_id']} shortlisted!", icon="✅")
+                        st.rerun()
+                        
+                is_in_compare = c_row['candidate_id'] in st.session_state.compare_list
+                btn_compare_lbl = "⚔️ Added to Compare" if is_in_compare else "⚔️ Add to Compare"
                 with col_act2:
-                    if st.button("⚔️ Add to Compare", use_container_width=True):
-                        st.toast(f"Candidate {c_row['candidate_id']} added to comparison board!", icon="⚔️")
+                    if st.button(btn_compare_lbl, use_container_width=True, type="primary" if is_in_compare else "secondary"):
+                        if is_in_compare:
+                            st.session_state.compare_list.remove(c_row['candidate_id'])
+                            st.toast(f"Removed {c_row['candidate_id']} from compare board.", icon="ℹ️")
+                        else:
+                            if len(st.session_state.compare_list) >= 3:
+                                st.toast("Comparison board is full! (Max 3 candidates). Remove one first.", icon="⚠️")
+                            else:
+                                st.session_state.compare_list.append(c_row['candidate_id'])
+                                st.toast(f"Candidate {c_row['candidate_id']} added to comparison board!", icon="⚔️")
+                        st.rerun()
+                        
+                is_saved = c_row['candidate_id'] in st.session_state.saved_profiles
+                btn_save_lbl = "⭐ Saved Profile" if is_saved else "⭐ Save Profile"
                 with col_act3:
-                    if st.button("⭐ Save Profile", use_container_width=True):
-                        st.toast(f"Profile saved to recruitment pipeline.", icon="⭐")
+                    if st.button(btn_save_lbl, use_container_width=True, type="primary" if is_saved else "secondary"):
+                        if is_saved:
+                            st.session_state.saved_profiles.remove(c_row['candidate_id'])
+                            st.toast(f"Removed {c_row['candidate_id']} from saved profiles.", icon="ℹ️")
+                        else:
+                            st.session_state.saved_profiles.add(c_row['candidate_id'])
+                            st.toast(f"Candidate {c_row['candidate_id']} saved to pipeline.", icon="⭐")
+                        st.rerun()
+                        
                 with col_act4:
-                    if st.button("📥 Export Report", use_container_width=True):
-                        st.toast(f"Exporting details as PDF report...", icon="📥")
+                    # Generate dynamic talent dossier text
+                    dossier_content = f"""Obsidian Talent Intelligence - Candidate Dossier
+==================================================
+Candidate ID: {c_row['candidate_id']}
+Role Applied: Senior AI Engineer (Founding Team)
+
+Match Profile:
+- Overall Match Score: {c_row['score_rounded']:.2%}
+- Semantic Fit: {c_row['tfidf_similarity']:.2%}
+- Skills Fit: {c_row['skill_match']:.2%}
+- Behavioral Fit: {c_row['behavioral_score']:.2%}
+- Education Fit: {c_row['education_bonus'] * 2.5:.2%}
+
+Candidate Info:
+- Current Title: {c_row['current_title']}
+- Current Company: {c_row['current_company'] or 'N/A'}
+- Years of Experience: {c_row['years_of_experience']:.1f}
+- Location: {c_row['location']}, {c_row['country']}
+- Notice Period: {int(c_row['notice_period_days'])} days
+
+AI Reasoning Summary:
+-------------------
+{c_row['reasoning']}
+
+Matched Skills:
+--------------
+{c_row['matched_skills_list'] or 'None direct'}
+"""
+                    st.download_button(
+                        label="📥 Export Report",
+                        data=dossier_content,
+                        file_name=f"dossier_{c_row['candidate_id']}.txt",
+                        mime="text/plain",
+                        use_container_width=True
+                    )
                         
                 st.write("")
                 
@@ -1118,8 +1198,12 @@ if candidates_df is not None:
             compare_ids = st.multiselect(
                 "Select Candidate IDs to Compare (Max 3)",
                 options=candidates_df["candidate_id"].tolist(),
-                default=candidates_df["candidate_id"].head(2).tolist()
+                key="compare_list"
             )
+            
+            if len(compare_ids) > 3:
+                st.warning("⚠️ You can compare a maximum of 3 candidates. Only the first 3 will be analyzed.")
+                compare_ids = compare_ids[:3]
             
             if len(compare_ids) > 0:
                 comp_rows = candidates_df[candidates_df["candidate_id"].isin(compare_ids)]
