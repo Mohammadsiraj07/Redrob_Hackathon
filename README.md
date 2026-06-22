@@ -1,3 +1,13 @@
+---
+title: Redrob Hackathon
+emoji: 🤖
+colorFrom: red
+colorTo: purple
+sdk: docker
+pinned: false
+app_port: 8501
+---
+
 # Redrob AI Hackathon — Track 1: Intelligent Candidate Ranking
 
 ## Overview
