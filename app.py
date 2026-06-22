@@ -956,6 +956,8 @@ if candidates_df is not None:
     # Desktop layout split: Col 1 = Left Rail, Col 2 = Center Main Workspace, Col 3 = Right Insights
     col_rail, col_center, col_right = st.columns([1.5, 7.5, 3])
 
+    selected_cid = None
+
     with col_rail:
         st.markdown('<div class="app-title" style="font-size:1.4rem;">Redrob AI</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.05em; margin-bottom:10px;">Workspace Menu</div>', unsafe_allow_html=True)
@@ -965,14 +967,15 @@ if candidates_df is not None:
             label_visibility="collapsed"
         )
         
-        st.markdown("---")
-        st.markdown('<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.05em; margin-bottom:10px;">Select Candidate</div>', unsafe_allow_html=True)
-        selected_cid = st.selectbox(
-            "Candidate Select",
-            options=candidates_df["candidate_id"].tolist(),
-            format_func=lambda x: f"{x} | {candidates_df[candidates_df['candidate_id']==x]['current_title'].values[0][:20]}",
-            label_visibility="collapsed"
-        )
+        if "Analyzer" in nav_selection:
+            st.markdown("---")
+            st.markdown('<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.05em; margin-bottom:10px;">Select Candidate</div>', unsafe_allow_html=True)
+            selected_cid = st.selectbox(
+                "Candidate Select",
+                options=candidates_df["candidate_id"].tolist(),
+                format_func=lambda x: f"{x} | {candidates_df[candidates_df['candidate_id']==x]['current_title'].values[0][:20]}",
+                label_visibility="collapsed"
+            )
 
     with col_center:
         # Header in Center stage
