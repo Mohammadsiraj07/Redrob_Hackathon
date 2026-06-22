@@ -20,7 +20,7 @@ team_members:
 # ============================================================================
 github_repo: "https://github.com/Mohammadsiraj07/Redrob_Hackathon"
 
-sandbox_link: "https://huggingface.co/spaces/Mohammadsiraj07/Redrob-Hackathon"
+sandbox_link: "https://huggingface.co/spaces/sirajmohammad6359/Redrob-Hackathon"
 
 reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
 
