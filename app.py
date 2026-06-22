@@ -772,36 +772,36 @@ def render_career_timeline(c_row):
         achievements_list = "".join(f'<li style="margin-bottom:6px;">{ach}.</li>' for ach in achievements[:3])
         impacts_list = "".join(f'<div style="margin-top:10px; font-size:0.75rem; color:#a78bfa; font-family:\'JetBrains Mono\', monospace; font-weight:600;">📈 Business Impact: {imp}.</div>' for imp in impacts[:1])
         
-        timeline_html += f"""
-        <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div class="glass-card" style="margin-left: 20px; padding: 18px; border-left: 3px solid #6366f1; margin-bottom: 16px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
-                    <div>
-                        <h4 style="margin:0; color:#ffffff; font-size:1.05rem; font-weight:600;">{title}</h4>
-                        <div style="color:#a78bfa; font-weight:500; font-size:0.875rem; margin-top:2px;">{company}</div>
-                    </div>
-                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; color:#cbd5e1;">
-                        {start} to {end} ({dur} months)
-                    </div>
-                </div>
-                <div style="color:#94a3b8; font-size:0.75rem; margin-top:2px;">Industry: {industry}</div>
-                <ul style="padding-left:18px; margin:10px 0 0 0; color:#e2e8f0; font-size:0.8rem; line-height:1.45;">
-                    {achievements_list}
-                </ul>
-                {impacts_list}
-            </div>
-        </div>
-        """
+        timeline_html += (
+            f'<div class="timeline-item">'
+            f'<div class="timeline-dot"></div>'
+            f'<div class="glass-card" style="margin-left: 20px; padding: 18px; border-left: 3px solid #6366f1; margin-bottom: 16px;">'
+            f'<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">'
+            f'<div>'
+            f'<h4 style="margin:0; color:#ffffff; font-size:1.05rem; font-weight:600;">{title}</h4>'
+            f'<div style="color:#a78bfa; font-weight:500; font-size:0.875rem; margin-top:2px;">{company}</div>'
+            f'</div>'
+            f'<div style="font-family:\'JetBrains Mono\', monospace; font-size:0.7rem; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; color:#cbd5e1;">'
+            f'{start} to {end} ({dur} months)'
+            f'</div>'
+            f'</div>'
+            f'<div style="color:#94a3b8; font-size:0.75rem; margin-top:2px;">Industry: {industry}</div>'
+            f'<ul style="padding-left:18px; margin:10px 0 0 0; color:#e2e8f0; font-size:0.8rem; line-height:1.45;">'
+            f'{achievements_list}'
+            f'</ul>'
+            f'{impacts_list}'
+            f'</div>'
+            f'</div>'
+        )
         
-    html = f"""
-    <div class="glass-card">
-        <h3 style="margin-top:0; color:#ffffff; font-family:'Outfit', sans-serif; font-size:1.2rem; margin-bottom:16px;">💼 Career Timeline</h3>
-        <div class="timeline">
-            {timeline_html}
-        </div>
-    </div>
-    """
+    html = (
+        f'<div class="glass-card">'
+        f'<h3 style="margin-top:0; color:#ffffff; font-family:\'Outfit\', sans-serif; font-size:1.2rem; margin-bottom:16px;">💼 Career Timeline</h3>'
+        f'<div class="timeline">'
+        f'{timeline_html}'
+        f'</div>'
+        f'</div>'
+    )
     return html
 
 
