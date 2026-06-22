@@ -234,6 +234,21 @@ st.markdown("""
         margin-bottom: 16px;
     }
 
+    /* Progress Animations */
+    @keyframes progress-grow {
+        from { width: 0%; }
+    }
+    .animate-progress-bar {
+        animation: progress-grow 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes radial-grow {
+        from { stroke-dashoffset: 100; }
+    }
+    .animate-radial-bar {
+        animation: radial-grow 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -468,7 +483,7 @@ def generate_table_html(df):
             f"<div style=\"display: flex; align-items: center; gap: 8px;\">"
             f"<span style=\"font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #10b981;\">{score:.2%}</span>"
             f"<div style=\"background: rgba(255, 255, 255, 0.05); width: 60px; height: 4px; border-radius: 2px; overflow: hidden;\">"
-            f"<div style=\"background: #10b981; width: {score * 100}%; height: 100%;\"></div>"
+            f"<div class=\"animate-progress-bar\" style=\"background: #10b981; width: {score * 100}%; height: 100%;\"></div>"
             f"</div>"
             f"</div>"
             f"</td>"
@@ -510,9 +525,9 @@ def render_radial_svg(score: float, label: str, color: str = "#6366f1"):
             <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                       fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2.8" />
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
-                      fill="none" stroke="{color}" stroke-width="2.8" stroke-dasharray="{pct}, 100" 
-                      stroke-linecap="round" />
+                <path class="animate-radial-bar" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                      fill="none" stroke="{color}" stroke-width="2.8" stroke-dasharray="100" 
+                      stroke-dashoffset="{100 - pct}" stroke-linecap="round" />
             </svg>
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: #ffffff;">
                 {pct}%
@@ -864,7 +879,7 @@ def render_explainability(c_row):
                 <span style="font-family:'JetBrains Mono', monospace;">{skills:.1%}</span>
             </div>
             <div style="background:rgba(255,255,255,0.05); height:6px; border-radius:3px; overflow:hidden;">
-                <div style="background:#10b981; width:{skills*100}%; height:100%;"></div>
+                <div class="animate-progress-bar" style="background:#10b981; width:{skills*100}%; height:100%;"></div>
             </div>
         </div>
         <div style="margin-bottom:10px;">
@@ -873,7 +888,7 @@ def render_explainability(c_row):
                 <span style="font-family:'JetBrains Mono', monospace;">{career:.1%}</span>
             </div>
             <div style="background:rgba(255,255,255,0.05); height:6px; border-radius:3px; overflow:hidden;">
-                <div style="background:#3b82f6; width:{career*100}%; height:100%;"></div>
+                <div class="animate-progress-bar" style="background:#3b82f6; width:{career*100}%; height:100%;"></div>
             </div>
         </div>
         <div style="margin-bottom:10px;">
@@ -882,7 +897,7 @@ def render_explainability(c_row):
                 <span style="font-family:'JetBrains Mono', monospace;">{beh:.1%}</span>
             </div>
             <div style="background:rgba(255,255,255,0.05); height:6px; border-radius:3px; overflow:hidden;">
-                <div style="background:#8b5cf6; width:{beh*100}%; height:100%;"></div>
+                <div class="animate-progress-bar" style="background:#8b5cf6; width:{beh*100}%; height:100%;"></div>
             </div>
         </div>
     </div>
@@ -1069,9 +1084,14 @@ if candidates_df is not None:
                             f'<div style="font-family:\'Outfit\', sans-serif; font-size:1.3rem; font-weight:bold; color:#fff;">{c["candidate_id"]}</div>'
                             f'<div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-top:2px;">{c["current_title"]}</div>'
                             f'<div style="font-size:0.8rem; color:#94a3b8;">at {c["current_company"] or "N/A"}</div>'
-                            f'<div style="display:flex; justify-content:space-between; margin-top:20px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid var(--border-color);">'
+                            f'<div style="display:flex; flex-direction:column; gap:8px; margin-top:20px; background:rgba(255,255,255,0.02); padding:12px; border-radius:6px; border:1px solid var(--border-color);">'
+                            f'<div style="display:flex; justify-content:space-between; align-items:center;">'
                             f'<span style="font-size:0.8rem; color:#94a3b8;">Match Score</span>'
                             f'<span style="font-family:\'JetBrains Mono\',monospace; font-weight:bold; color:#fff; font-size:1.2rem;">{score_pct}%</span>'
+                            f'</div>'
+                            f'<div style="background: rgba(255, 255, 255, 0.05); width: 100%; height: 6px; border-radius: 3px; overflow: hidden;">'
+                            f'<div class="animate-progress-bar" style="background: {fit_col}; width: {score_pct}%; height: 100%;"></div>'
+                            f'</div>'
                             f'</div>'
                             f'<div style="margin-top:16px;">'
                             f'<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; margin-bottom:4px;">Experience</div>'
