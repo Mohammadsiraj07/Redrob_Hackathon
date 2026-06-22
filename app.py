@@ -460,43 +460,43 @@ def generate_table_html(df):
         notice_txt = "Immediate" if notice <= 15 else f"{notice}d"
         notice_class = "skill-match" if notice <= 30 else ("skill-transferable" if notice <= 60 else "skill-missing")
         
-        rows_html += f"""
-        <tr>
-            <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #6366f1;">#{rank}</td>
-            <td style="font-weight: 600; color: #ffffff;">{cid}</td>
-            <td>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #10b981;">{score:.2%}</span>
-                    <div style="background: rgba(255, 255, 255, 0.05); width: 60px; height: 4px; border-radius: 2px; overflow: hidden;">
-                        <div style="background: #10b981; width: {score * 100}%; height: 100%;"></div>
-                    </div>
-                </div>
-            </td>
-            <td>{yoe:.1f} yrs</td>
-            <td>{company}</td>
-            <td><span class="skill-chip {notice_class}" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">{notice_txt}</span></td>
-            <td><span class="skill-chip {fit_class}" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">{fit_cat}</span></td>
-        </tr>
-        """
+        rows_html += (
+            f"<tr>"
+            f"<td style=\"font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #6366f1;\">#{rank}</td>"
+            f"<td style=\"font-weight: 600; color: #ffffff;\">{cid}</td>"
+            f"<td>"
+            f"<div style=\"display: flex; align-items: center; gap: 8px;\">"
+            f"<span style=\"font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #10b981;\">{score:.2%}</span>"
+            f"<div style=\"background: rgba(255, 255, 255, 0.05); width: 60px; height: 4px; border-radius: 2px; overflow: hidden;\">"
+            f"<div style=\"background: #10b981; width: {score * 100}%; height: 100%;\"></div>"
+            f"</div>"
+            f"</div>"
+            f"</td>"
+            f"<td>{yoe:.1f} yrs</td>"
+            f"<td>{company}</td>"
+            f"<td><span class=\"skill-chip {notice_class}\" style=\"margin: 0; padding: 2px 8px; font-size: 0.7rem;\">{notice_txt}</span></td>"
+            f"<td><span class=\"skill-chip {fit_class}\" style=\"margin: 0; padding: 2px 8px; font-size: 0.7rem;\">{fit_cat}</span></td>"
+            f"</tr>"
+        )
         
-    html = f"""
-    <table class="premium-table">
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Candidate ID</th>
-                <th>Match Score</th>
-                <th>Experience</th>
-                <th>Current Company</th>
-                <th>Notice Period</th>
-                <th>Fit Category</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows_html}
-        </tbody>
-    </table>
-    """
+    html = (
+        f"<table class=\"premium-table\">"
+        f"<thead>"
+        f"<tr>"
+        f"<th>Rank</th>"
+        f"<th>Candidate ID</th>"
+        f"<th>Match Score</th>"
+        f"<th>Experience</th>"
+        f"<th>Current Company</th>"
+        f"<th>Notice Period</th>"
+        f"<th>Fit Category</th>"
+        f"</tr>"
+        f"</thead>"
+        f"<tbody>"
+        f"{rows_html}"
+        f"</tbody>"
+        f"</table>"
+    )
     return html
 
 
@@ -961,7 +961,7 @@ if candidates_df is not None:
             # Show premium HTML data table
             st.write(f"Showing {len(display_df)} candidates matching filters:")
             table_html = generate_table_html(display_df.head(20)) # top 20 candidates
-            st.markdown(table_html, unsafe_allow_html=True)
+            st.markdown(table_html.strip(), unsafe_allow_html=True)
             
             if len(display_df) > 20:
                 st.info(f"Showing top 20 results. To analyze the remaining {len(display_df)-20} candidates, please use the location filter or selects above.")
