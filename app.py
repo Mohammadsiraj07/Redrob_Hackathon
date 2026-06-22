@@ -977,9 +977,13 @@ if candidates_df is not None:
     with col_rail:
         st.markdown('<div class="app-title" style="font-size:1.4rem;">Redrob AI</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.05em; margin-bottom:10px;">Workspace Menu</div>', unsafe_allow_html=True)
+        if "active_tab" not in st.session_state:
+            st.session_state.active_tab = "📊 Dashboard"
+            
         nav_selection = st.radio(
             "Navigation",
             options=["📊 Dashboard", "🔍 Analyzer", "⚔️ Comparison"],
+            key="active_tab",
             label_visibility="collapsed"
         )
         
@@ -1002,28 +1006,44 @@ if candidates_df is not None:
             st.subheader("Candidate Rankings Dashboard")
             
             # Filters inside workspace
-            filter_col1, filter_col2 = st.columns(2)
+            filter_col1, filter_col2, filter_col3 = st.columns([2, 1.5, 1.5])
             with filter_col1:
                 loc_search = st.text_input("📍 Filter by Location keyword", "")
             with filter_col2:
                 exclude_hp_display = st.checkbox("🚫 Hide honeypot candidates", value=False)
+            with filter_col3:
+                show_shortlisted = st.checkbox("✅ Shortlisted Only", value=False)
+                show_saved = st.checkbox("⭐ Saved Only", value=False)
                 
             display_df = candidates_df.copy()
             if loc_search:
                 display_df = display_df[display_df["location"].str.contains(loc_search, case=False, na=False)]
             if exclude_hp_display:
                 display_df = display_df[display_df["is_honeypot"] == False]
+            if show_shortlisted:
+                display_df = display_df[display_df["candidate_id"].isin(st.session_state.shortlisted)]
+            if show_saved:
+                display_df = display_df[display_df["candidate_id"].isin(st.session_state.saved_profiles)]
                 
             # Reset page if filter values changed
             if "last_loc_search" not in st.session_state:
                 st.session_state.last_loc_search = ""
             if "last_exclude_hp" not in st.session_state:
                 st.session_state.last_exclude_hp = False
+            if "last_show_shortlisted" not in st.session_state:
+                st.session_state.last_show_shortlisted = False
+            if "last_show_saved" not in st.session_state:
+                st.session_state.last_show_saved = False
                 
-            if st.session_state.last_loc_search != loc_search or st.session_state.last_exclude_hp != exclude_hp_display:
+            if (st.session_state.last_loc_search != loc_search or 
+                st.session_state.last_exclude_hp != exclude_hp_display or
+                st.session_state.last_show_shortlisted != show_shortlisted or
+                st.session_state.last_show_saved != show_saved):
                 st.session_state.current_page = 1
                 st.session_state.last_loc_search = loc_search
                 st.session_state.last_exclude_hp = exclude_hp_display
+                st.session_state.last_show_shortlisted = show_shortlisted
+                st.session_state.last_show_saved = show_saved
 
             # Pagination logic: 10 candidates per page
             candidates_per_page = 10
@@ -1110,6 +1130,7 @@ if candidates_df is not None:
                             else:
                                 st.session_state.compare_list.append(c_row['candidate_id'])
                                 st.toast(f"Candidate {c_row['candidate_id']} added to comparison board!", icon="⚔️")
+                                st.session_state.active_tab = "⚔️ Comparison" # Programmatic redirect!
                         st.rerun()
                         
                 is_saved = c_row['candidate_id'] in st.session_state.saved_profiles
