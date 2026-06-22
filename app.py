@@ -223,6 +223,9 @@ def process_data(file_content, jd_input_text):
             "github_bonus": fe.compute_github_bonus(c),
             "assessment_score": fe.compute_assessment_score(c),
             "education_bonus": fe.compute_education_bonus(c),
+            "matched_skills_list": fe.get_matched_skills_list(c),
+            "top_employers": fe.get_top_employers(c),
+            "top_education": fe.get_top_education(c),
             # Raw fields for profile display
             "years_of_experience": profile.get("years_of_experience", 0),
             "current_title": profile.get("current_title", ""),

@@ -56,6 +56,18 @@ def run_tests():
     assert len(honeypots_in_top100) == 0, f"Disqualification Warning! Found {len(honeypots_in_top100)} honeypots in top 100: {honeypots_in_top100}"
     print(f"✓ Zero honeypots found in top 100 (Honeypot rate: 0.0%).")
     
+    # 7.5. Check for overqualification in top 10
+    print("\nChecking for overqualified candidates in top 10...")
+    top10_ids = sub_df.head(10)["candidate_id"].tolist()
+    top10_feats = feat_df[feat_df["candidate_id"].isin(top10_ids)]
+    overqualified_top10 = top10_feats[top10_feats["years_of_experience"] > 12]
+    if len(overqualified_top10) > 0:
+        print(f"  [WARNING] Found {len(overqualified_top10)} overqualified candidates (YoE > 12) in top 10:")
+        for _, row in overqualified_top10.iterrows():
+            print(f"    - {row['candidate_id']} has {row['years_of_experience']} YoE")
+        assert False, "Disqualification Warning! Overqualified candidate in top 10."
+    print("✓ No overqualified candidates (YoE > 12) in top 10.")
+    
     # 8. Print global Honeypot detection stats
     print("\nGlobal Honeypot statistics:")
     total_cands = len(feat_df)

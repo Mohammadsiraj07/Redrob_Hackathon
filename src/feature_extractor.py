@@ -341,6 +341,10 @@ def compute_disqualifier_penalty(candidate: dict) -> float:
     yoe = profile.get("years_of_experience", 0)
     title = profile.get("current_title", "").lower()
 
+    # Overqualification check (YoE > 12)
+    if yoe > 12:
+        penalty += 0.25  # overqualified for founding team role
+
     # Pure consulting career
     total_months = sum(r.get("duration_months", 0) for r in career)
     consulting_months = sum(
@@ -427,6 +431,45 @@ def compute_education_bonus(candidate: dict) -> float:
     return min(0.4, bonus)
 
 
+def get_matched_skills_list(candidate: dict) -> str:
+    skills = candidate.get("skills", [])
+    profile = candidate.get("profile", {})
+    career = candidate.get("career_history", [])
+
+    all_text = " ".join([
+        " ".join(s["name"].lower() for s in skills),
+        profile.get("summary", "").lower(),
+        profile.get("headline", "").lower(),
+        " ".join(r.get("description", "").lower() for r in career),
+    ])
+
+    matched = []
+    for hs in HARD_SKILLS:
+        if hs.lower() in all_text:
+            matched.append(hs)
+    return ", ".join(matched[:5]) # keep top 5 matched skills
+
+
+def get_top_employers(candidate: dict) -> str:
+    career = candidate.get("career_history", [])
+    employers = [role.get("company", "") for role in career if role.get("company", "")]
+    seen = set()
+    unique_employers = []
+    for emp in employers:
+        if emp and emp not in seen:
+            seen.add(emp)
+            unique_employers.append(emp)
+    return ", ".join(unique_employers[:2]) # get top 2 employers
+
+
+def get_top_education(candidate: dict) -> str:
+    education = candidate.get("education", [])
+    institutions = [edu.get("institution", "") for edu in education if edu.get("institution", "")]
+    if institutions:
+        return institutions[0]
+    return ""
+
+
 # ─── Main extraction loop ────────────────────────────────────────────────────────
 
 def extract_features(candidates_path: str, out_path: str):
@@ -494,6 +537,9 @@ def extract_features(candidates_path: str, out_path: str):
             "github_bonus": compute_github_bonus(c),
             "assessment_score": compute_assessment_score(c),
             "education_bonus": compute_education_bonus(c),
+            "matched_skills_list": get_matched_skills_list(c),
+            "top_employers": get_top_employers(c),
+            "top_education": get_top_education(c),
             # Raw signals for reasoning
             "years_of_experience": c.get("profile", {}).get("years_of_experience", 0),
             "current_title": c.get("profile", {}).get("current_title", ""),

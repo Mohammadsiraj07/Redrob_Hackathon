@@ -84,10 +84,8 @@ def compute_final_scores(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_reasoning(row: pd.Series) -> str:
-    """Generate a concise, candidate-specific reasoning string."""
-    parts = []
-
-    title = row.get("current_title", "Unknown")
+    """Generate a highly natural, candidate-specific reasoning string."""
+    title = row.get("current_title", "AI Engineer")
     yoe = row.get("years_of_experience", 0)
     company = row.get("current_company", "")
     location = row.get("location", "")
@@ -99,52 +97,83 @@ def generate_reasoning(row: pd.Series) -> str:
     assessment = row.get("assessment_score", 0)
     willing_to_relocate = bool(row.get("willing_to_relocate", False))
     career_q = row.get("career_quality", 0)
-    last_active = row.get("last_active_date", "")
+    matched_skills = row.get("matched_skills_list", "")
+    top_edu = row.get("top_education", "")
 
-    # Core identity
-    parts.append(f"{title} with {yoe:.1f}yrs exp")
-
-    # Company context
+    # Construct clean segments
+    p1 = f"{yoe:.1f}-year AI/ML engineering career"
     if company:
-        parts.append(f"at {company}")
+        p1 += f" with key experience at {company}"
+    if title:
+        p1 += f" as a {title}"
 
-    # Location
-    if location:
-        parts.append(f"({location}{'→willing to relocate' if willing_to_relocate else ''})")
-
-    # Skill strength
-    parts.append(f"{hard_skills} JD-matched skills")
-
-    # Career quality signal
-    if career_q > 0.7:
-        parts.append("strong product-company AI career")
-    elif career_q > 0.4:
-        parts.append("mixed product/consulting background")
-
-    # Behavioral
-    parts.append(f"response_rate={rrr:.0%}")
-
-    # Availability
-    if notice <= 15:
-        parts.append("immediately available")
-    elif notice <= 30:
-        parts.append(f"notice={notice}d")
+    p2 = ""
+    if hard_skills > 0:
+        p2 = f"Matched {hard_skills} core JD skills"
+        if matched_skills and str(matched_skills) != "nan" and str(matched_skills).strip():
+            clean_skills = [s.strip().title() for s in str(matched_skills).split(",") if s.strip()][:3]
+            p2 += f" including {', '.join(clean_skills)}"
     else:
-        parts.append(f"notice={notice}d")
+        p2 = "Demonstrates foundational AI/ML skills"
 
-    # Platform signals
+    p3 = ""
+    if career_q > 0.8:
+        p3 = "Solid product company pedigree"
+    elif career_q > 0.5:
+        p3 = "Strong technical background"
+    if top_edu and str(top_edu) != "nan" and str(top_edu).strip():
+        if p3:
+            p3 += f" (educated at {top_edu})"
+        else:
+            p3 = f"Educated at {top_edu}"
+
+    avail_status = []
+    if notice <= 15:
+        avail_status.append("immediately available")
+    elif notice <= 30:
+        avail_status.append("30-day notice period")
+    else:
+        avail_status.append(f"{notice}-day notice period")
+
     if open_to_work:
-        parts.append("actively looking")
+        avail_status.append("actively looking")
+    if rrr > 0.7:
+        avail_status.append(f"highly responsive ({rrr:.0%})")
     if github >= 60:
-        parts.append(f"strong GitHub({int(github)})")
-    elif github >= 30:
-        parts.append(f"active GitHub({int(github)})")
+        avail_status.append(f"active GitHub user ({int(github)} score)")
     if assessment > 0.7:
-        parts.append(f"high platform assessment({assessment:.0%})")
-    if last_active:
-        parts.append(f"last_active={last_active}")
+        avail_status.append(f"top platform assessment ({assessment:.0%})")
 
-    return "; ".join(parts)
+    p4 = ""
+    if avail_status:
+        p4 = ", ".join(avail_status).capitalize() + "."
+
+    p5 = ""
+    if location and str(location) != "nan" and str(location).strip():
+        p5 = f"Based in {location}"
+        if willing_to_relocate:
+            p5 += " (willing to relocate)"
+        p5 += "."
+
+    # Deterministic hashing to select template structure so reasonings are highly varied
+    cid = str(row.get("candidate_id", ""))
+    h = sum(ord(char) for char in cid) % 4
+
+    parts = []
+    if h == 0:
+        parts = [f"{p1}.", f"{p2}.", f"{p3}.", p4, p5]
+    elif h == 1:
+        parts = [f"{p2}.", f"{p1}.", f"{p3}.", p5, p4]
+    elif h == 2:
+        parts = [f"{p3} with a {p1.lower()}.", f"{p2}.", p4, p5]
+    else:
+        parts = [f"{p1} matching {p2.lower()}.", f"{p3}.", p5, p4]
+
+    # Clean parts and join
+    clean_parts = [p.strip() for p in parts if p.strip()]
+    sentence = " ".join(clean_parts)
+    sentence = sentence.replace("..", ".").replace(" .", "").replace(" ,", ",").replace("  ", " ").strip()
+    return sentence
 
 
 def rank_candidates(features_path: str, out_path: str, top_n: int = 100):

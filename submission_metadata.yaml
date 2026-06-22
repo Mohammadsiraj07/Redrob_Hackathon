@@ -6,13 +6,13 @@
 team_name: "redrob-ai-ranker"
 
 primary_contact:
-  name: "Shaheryar"
-  email: "primary@example.com"
-  phone: "+91-XXXXXXXXXX"
+  name: "Mohammad Siraj"
+  email: "mohammadsiraj07@gmail.com"
+  phone: "+91-9988776655"
 
 team_members:
-  - name: "Shaheryar"
-    email: "primary@example.com"
+  - name: "Mohammad Siraj"
+    email: "mohammadsiraj07@gmail.com"
     role: "Team Lead / ML Engineer"
 
 # ============================================================================

@@ -67,13 +67,13 @@ final_score = (skill_match    × 0.40)
 
 To run end-to-end (Phase 1 + Phase 2):
 ```bash
-python rank.py --candidates "data/[PUB] India_runs_data_and_ai_challenge/India_runs_data_and_ai_challenge/candidates.jsonl" --out ./submission.csv
+python rank.py --candidates ./candidates.jsonl --out ./submission.csv
 ```
 
 Or separately:
 ```bash
 # Phase 1: Precompute features (~4 minutes on CPU)
-python precompute.py --candidates "data/[PUB] India_runs_data_and_ai_challenge/India_runs_data_and_ai_challenge/candidates.jsonl" --out ./features.parquet
+python precompute.py --candidates ./candidates.jsonl --out ./features.parquet
 
 # Phase 2: Rank candidates (<5 seconds on CPU)
 python src/ranker.py --features ./features.parquet --out ./submission.csv
