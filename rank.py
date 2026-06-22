@@ -48,4 +48,4 @@ if __name__ == "__main__":
     else:
         print(f"[OK] Phase 2 within 5-min limit ({elapsed:.1f}s)")
 
-    print(f"\n✓ Done. Submission saved to: {args.out}")
+    print(f"\n[OK] Done. Submission saved to: {args.out}")
