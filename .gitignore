@@ -1,5 +1,6 @@
 # Data files (large)
 *.jsonl
+!sample_candidates.jsonl
 *.parquet
 *.zip
 data/
