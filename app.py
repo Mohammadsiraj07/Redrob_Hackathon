@@ -1022,15 +1022,15 @@ if candidates_df is not None:
                 behavioral_score = float(c_row["behavioral_score"])
                 education_score = float(c_row["education_bonus"]) * 2.5 # scaled to [0,1]
                 
-                radial_layout = f"""
-                <div style="display: flex; flex-wrap: wrap; justify-content: space-around; background: rgba(18, 29, 49, 0.45); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); margin-bottom:24px;">
-                    {render_radial_svg(overall_score, "Overall Match", "#6366f1")}
-                    {render_radial_svg(semantic_score, "Semantic Fit", "#3b82f6")}
-                    {render_radial_svg(skills_score, "Skills Fit", "#10b981")}
-                    {render_radial_svg(behavioral_score, "Behavioral Fit", "#f59e0b")}
-                    {render_radial_svg(education_score, "Education Fit", "#8b5cf6")}
-                </div>
-                """
+                radial_layout = (
+                    f'<div style="display: flex; flex-wrap: wrap; justify-content: space-around; background: rgba(18, 29, 49, 0.45); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); margin-bottom:24px;">'
+                    f'{render_radial_svg(overall_score, "Overall Match", "#6366f1").strip()}'
+                    f'{render_radial_svg(semantic_score, "Semantic Fit", "#3b82f6").strip()}'
+                    f'{render_radial_svg(skills_score, "Skills Fit", "#10b981").strip()}'
+                    f'{render_radial_svg(behavioral_score, "Behavioral Fit", "#f59e0b").strip()}'
+                    f'{render_radial_svg(education_score, "Education Fit", "#8b5cf6").strip()}'
+                    f'</div>'
+                )
                 st.markdown(radial_layout, unsafe_allow_html=True)
                 
                 # 3. Recruiter AI Summary (Strengths, Concerns, Recommendation)
