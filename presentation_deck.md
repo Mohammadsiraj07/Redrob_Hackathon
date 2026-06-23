@@ -1,6 +1,6 @@
 # Redrob AI Hackathon — Track 1: Data & AI Challenge
 ## Intelligent Candidate Ranking System (Senior AI Engineer - Founding Team)
-*Author: Shaheryar (Team Lead / ML Engineer)*
+*Author: Mohammad Siraj (ML Engineer / Individual Participant)*
 
 ---
 

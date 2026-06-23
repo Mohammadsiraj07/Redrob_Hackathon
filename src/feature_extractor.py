@@ -50,9 +50,18 @@ HARD_SKILLS = [
 ]
 
 CONSULTING_FIRMS = [
-    "tcs", "tata consultancy", "infosys", "wipro", "accenture",
-    "cognizant", "capgemini", "hcl", "tech mahindra", "mphasis",
-    "mindtree", "hexaware", "l&t infotech", "ltimindtree",
+    # Tier 1 Indian IT services
+    "tcs", "tata consultancy", "infosys", "wipro", "hcl", "tech mahindra",
+    "mphasis", "mindtree", "hexaware", "l&t infotech", "ltimindtree",
+    # Big 4 + Management consulting
+    "accenture", "cognizant", "capgemini", "ibm global", "ibm", "deloitte",
+    "kpmg", "ernst", "ey", "pwc",
+    # BPO / Managed services
+    "genpact", "wns", "firstsource", "concentrix", "alorica",
+    # Mid-tier IT services
+    "dxc", "persistent systems", "zensar", "birlasoft", "niit",
+    "cyient", "kpit", "sonata software", "tata elxsi", "mastech",
+    "moogambigai", "oracle consulting", "sap consulting",
 ]
 
 PRODUCT_COMPANY_SIGNALS = [
@@ -298,7 +307,7 @@ def compute_behavioral_score(candidate: dict) -> float:
     try:
         last_active = datetime.strptime(last_active_str, "%Y-%m-%d").date()
         days_inactive = (REFERENCE_DATE - last_active).days
-        recency_score = max(0.0, 1.0 - (days_inactive / 365))
+        recency_score = max(0.0, 1.0 - (days_inactive / 180))
     except Exception:
         recency_score = 0.5
 
@@ -308,7 +317,7 @@ def compute_behavioral_score(candidate: dict) -> float:
     # Interview completion rate (0-1)
     icr = signals.get("interview_completion_rate", 0.5)
 
-    behavioral = (rrr * 0.35) + (recency_score * 0.30) + (open_to_work * 0.20) + (icr * 0.15)
+    behavioral = (rrr * 0.40) + (recency_score * 0.35) + (open_to_work * 0.10) + (icr * 0.15)
     return min(1.0, behavioral)
 
 
@@ -317,14 +326,12 @@ def compute_availability_score(candidate: dict) -> float:
     signals = candidate.get("redrob_signals", {})
     notice = signals.get("notice_period_days", 90)
 
-    if notice <= 15:
+    if notice <= 30:
         return 1.0
-    elif notice <= 30:
-        return 0.9
     elif notice <= 45:
-        return 0.7
+        return 0.8
     elif notice <= 60:
-        return 0.5
+        return 0.6
     elif notice <= 90:
         return 0.3
     else:

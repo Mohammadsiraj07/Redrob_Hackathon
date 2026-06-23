@@ -429,8 +429,14 @@ def process_data(file_content, jd_input_text):
         hp_mask = df["is_honeypot"] == True
         df.loc[hp_mask, "final_score"] = df.loc[hp_mask, "final_score"].clip(0, honeypot_cap)
 
-    # Round and sort
-    df["score_rounded"] = df["final_score"].round(4)
+    # Add a micro-tiebreaker that uses additional signals to eliminate ties
+    df["tiebreaker"] = (
+        df["github_activity_score"].clip(0, 100) / 100 * 0.0005
+        + df["profile_completeness_score"].clip(0, 100) / 100 * 0.0003
+        + df["recruiter_response_rate"] * 0.0002
+    )
+    # Round and sort. We round to 6 decimal places to eliminate ties.
+    df["score_rounded"] = (df["final_score"] + df["tiebreaker"]).clip(0, 1).round(6)
     df_sorted = df.sort_values(
         by=["score_rounded", "candidate_id"],
         ascending=[False, True]

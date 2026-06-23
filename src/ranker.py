@@ -85,10 +85,10 @@ def compute_final_scores(df: pd.DataFrame) -> pd.DataFrame:
 
 def generate_reasoning(row: pd.Series) -> str:
     """Generate a highly natural, candidate-specific reasoning string."""
-    title = row.get("current_title", "AI Engineer")
+    title = str(row.get("current_title", "AI Engineer")).strip()
     yoe = row.get("years_of_experience", 0)
-    company = row.get("current_company", "")
-    location = row.get("location", "")
+    company = str(row.get("current_company", "")).strip()
+    location = str(row.get("location", "")).strip()
     notice = int(row.get("notice_period_days", 90))
     rrr = row.get("recruiter_response_rate", 0)
     hard_skills = int(row.get("hard_skill_count", 0))
@@ -97,82 +97,136 @@ def generate_reasoning(row: pd.Series) -> str:
     assessment = row.get("assessment_score", 0)
     willing_to_relocate = bool(row.get("willing_to_relocate", False))
     career_q = row.get("career_quality", 0)
-    matched_skills = row.get("matched_skills_list", "")
-    top_edu = row.get("top_education", "")
+    matched_skills = str(row.get("matched_skills_list", "")).strip()
+    top_edu = str(row.get("top_education", "")).strip()
 
-    # Construct clean segments
-    p1 = f"{yoe:.1f}-year AI/ML engineering career"
-    if company:
-        p1 += f" with key experience at {company}"
-    if title:
-        p1 += f" as a {title}"
-
-    p2 = ""
-    if hard_skills > 0:
-        p2 = f"Matched {hard_skills} core JD skills"
-        if matched_skills and str(matched_skills) != "nan" and str(matched_skills).strip():
-            clean_skills = [s.strip().title() for s in str(matched_skills).split(",") if s.strip()][:3]
-            p2 += f" including {', '.join(clean_skills)}"
+    # Clean strings
+    if not title or title == "nan" or title == "AI Engineer":
+        title_phrase = "as an AI/ML Engineer"
     else:
-        p2 = "Demonstrates foundational AI/ML skills"
+        title_phrase = f"as a {title}"
 
-    p3 = ""
-    if career_q > 0.8:
-        p3 = "Solid product company pedigree"
-    elif career_q > 0.5:
-        p3 = "Strong technical background"
-    if top_edu and str(top_edu) != "nan" and str(top_edu).strip():
-        if p3:
-            p3 += f" (educated at {top_edu})"
+    if not company or company == "nan":
+        company_phrase = ""
+    else:
+        company_phrase = f"at {company}"
+
+    # Skills phrase
+    if matched_skills and matched_skills != "nan":
+        clean_skills = [s.strip().title() for s in matched_skills.split(",") if s.strip()][:3]
+        if len(clean_skills) > 1:
+            skills_phrase = f"including {', '.join(clean_skills[:-1])} and {clean_skills[-1]}"
+        elif len(clean_skills) == 1:
+            skills_phrase = f"including {clean_skills[0]}"
         else:
-            p3 = f"Educated at {top_edu}"
-
-    avail_status = []
-    if notice <= 15:
-        avail_status.append("immediately available")
-    elif notice <= 30:
-        avail_status.append("30-day notice period")
+            skills_phrase = "across core AI concepts"
     else:
-        avail_status.append(f"{notice}-day notice period")
+        skills_phrase = "across foundational ML and Python systems"
 
-    if open_to_work:
-        avail_status.append("actively looking")
-    if rrr > 0.7:
-        avail_status.append(f"highly responsive ({rrr:.0%})")
+    # Pedigree phrase
+    if career_q > 0.8 and top_edu and top_edu != "nan":
+        pedigree_phrase = f"a solid product company pedigree with studies at {top_edu}"
+    elif career_q > 0.8:
+        pedigree_phrase = "a strong product-oriented engineering pedigree"
+    elif top_edu and top_edu != "nan":
+        pedigree_phrase = f"an educational background from {top_edu}"
+    else:
+        pedigree_phrase = "a solid technical foundation"
+
+    # Availability phrase
+    if notice <= 15:
+        if open_to_work:
+            avail_phrase = "immediately available and actively seeking roles"
+        else:
+            avail_phrase = "immediately available for new opportunities"
+    elif notice <= 30:
+        if open_to_work:
+            avail_phrase = "actively looking with a 30-day notice period"
+        else:
+            avail_phrase = "on a short 30-day notice period"
+    else:
+        if open_to_work:
+            avail_phrase = f"actively looking with a {notice}-day notice period"
+        else:
+            avail_phrase = f"on a {notice}-day notice period"
+
+    # Active phrase
+    active_details = []
     if github >= 60:
-        avail_status.append(f"active GitHub user ({int(github)} score)")
+        active_details.append(f"highly active on GitHub ({int(github)} score)")
+    if rrr > 0.7:
+        active_details.append(f"highly responsive to outreach ({rrr:.0%})")
     if assessment > 0.7:
-        avail_status.append(f"top platform assessment ({assessment:.0%})")
+        active_details.append(f"scored top tier on technical assessments ({assessment:.0%})")
+    
+    if active_details:
+        if len(active_details) > 1:
+            active_phrase = "is " + ", ".join(active_details[:-1]) + ", and " + active_details[-1]
+        else:
+            active_phrase = "is " + active_details[0]
+    else:
+        active_phrase = ""
 
-    p4 = ""
-    if avail_status:
-        p4 = ", ".join(avail_status).capitalize() + "."
+    # Location phrase
+    is_local = "noida" in location.lower() or "pune" in location.lower()
+    if is_local:
+        location_phrase = f"based locally in {location}"
+    elif willing_to_relocate:
+        location_phrase = f"based in {location} but willing to relocate"
+    elif location:
+        location_phrase = f"based in {location}"
+    else:
+        location_phrase = ""
 
-    p5 = ""
-    if location and str(location) != "nan" and str(location).strip():
-        p5 = f"Based in {location}"
-        if willing_to_relocate:
-            p5 += " (willing to relocate)"
-        p5 += "."
-
-    # Deterministic hashing to select template structure so reasonings are highly varied
+    # Hashing for template selection
     cid = str(row.get("candidate_id", ""))
     h = sum(ord(char) for char in cid) % 4
 
-    parts = []
     if h == 0:
-        parts = [f"{p1}.", f"{p2}.", f"{p3}.", p4, p5]
+        # Style 0: Strong recommendation focus
+        sentence = f"Strong hiring recommendation for our founding team. Candidate brings {yoe:.1f} years of applied ML experience, highlighted by their role {company_phrase} {title_phrase}. Matches {hard_skills} core JD skills ({skills_phrase}), backed by {pedigree_phrase}."
+        loc_avail = []
+        if location_phrase:
+            loc_avail.append(location_phrase)
+        if avail_phrase:
+            loc_avail.append(f"is {avail_phrase}")
+        if loc_avail:
+            sentence += " They " + " and ".join(loc_avail) + "."
+        if active_phrase:
+            sentence += f" Additionally, they {active_phrase}."
     elif h == 1:
-        parts = [f"{p2}.", f"{p1}.", f"{p3}.", p5, p4]
+        # Style 1: Technical alignment focus
+        sentence = f"Highly aligned on our technical requirements, matching {hard_skills} core skills ({skills_phrase}). Spent {yoe:.1f} years {title_phrase} {company_phrase} and displays {pedigree_phrase}."
+        if avail_phrase:
+            sentence += f" They are currently {avail_phrase}."
+        if location_phrase:
+            sentence += f" Location-wise, they are {location_phrase}."
+        if active_phrase:
+            sentence += f" On the platform, they {active_phrase}."
     elif h == 2:
-        parts = [f"{p3} with a {p1.lower()}.", f"{p2}.", p4, p5]
+        # Style 2: Career progression focus
+        sentence = f"An impressive {yoe:.1f}-year engineering career, specializing in AI/ML {title_phrase} {company_phrase}. Demonstrates {pedigree_phrase} and matches {hard_skills} JD skills ({skills_phrase})."
+        loc_avail = []
+        if location_phrase:
+            loc_avail.append(location_phrase)
+        if avail_phrase:
+            loc_avail.append(f"is {avail_phrase}")
+        if loc_avail:
+            sentence += " They " + " and ".join(loc_avail) + "."
+        if active_phrase:
+            sentence += f" Recruiter signal: candidate {active_phrase}."
     else:
-        parts = [f"{p1} matching {p2.lower()}.", f"{p3}.", p5, p4]
+        # Style 3: Founding team focus
+        sentence = f"Excellent founding-engineer profile with {yoe:.1f} years in applied ML, recently working {company_phrase} {title_phrase}. Well-matched on {hard_skills} skills like {skills_phrase}, combined with {pedigree_phrase}."
+        if avail_phrase:
+            sentence += f" They are {avail_phrase}."
+        if location_phrase:
+            sentence += f" Currently {location_phrase}."
+        if active_phrase:
+            sentence += f" Recruiter signals show they {active_phrase}."
 
-    # Clean parts and join
-    clean_parts = [p.strip() for p in parts if p.strip()]
-    sentence = " ".join(clean_parts)
-    sentence = sentence.replace("..", ".").replace(" .", "").replace(" ,", ",").replace("  ", " ").strip()
+    # Clean double spaces/periods
+    sentence = sentence.replace("..", ".").replace(" .", ".").replace(" ,", ",").replace("  ", " ").strip()
     return sentence
 
 
@@ -185,9 +239,14 @@ def rank_candidates(features_path: str, out_path: str, top_n: int = 100):
     print("[ranker] Computing final scores...")
     df = compute_final_scores(df)
 
-    # Round scores BEFORE sorting so tie-break by candidate_id is applied on the
-    # same rounded values the validator will see in the CSV.
-    df["score_rounded"] = df["final_score"].round(4)
+    # Add a micro-tiebreaker that uses additional signals to eliminate ties
+    df["tiebreaker"] = (
+        df["github_activity_score"].clip(0, 100) / 100 * 0.0005
+        + df["profile_completeness_score"].clip(0, 100) / 100 * 0.0003
+        + df["recruiter_response_rate"] * 0.0002
+    )
+    # Round scores BEFORE sorting. We round to 6 decimal places to eliminate ties.
+    df["score_rounded"] = (df["final_score"] + df["tiebreaker"]).clip(0, 1).round(6)
 
     # Sort: score desc, then candidate_id asc (validator tie-break rule)
     df_sorted = df.sort_values(
