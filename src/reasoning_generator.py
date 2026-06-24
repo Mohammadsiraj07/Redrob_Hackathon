@@ -317,7 +317,7 @@ def main():
 
         llm_text = call_llm(prompt, args.api_base, args.api_key, args.model)
 
-        if llm_text and len(llm_text.split()) >= 20:
+        if llm_text and len(llm_text.split()) >= 40:
             llm_text = clean_llm_output(llm_text)
             sub_df.at[i, "reasoning"] = llm_text
             updated += 1
