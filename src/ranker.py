@@ -161,9 +161,9 @@ def generate_reasoning(row: pd.Series) -> str:
     
     if active_details:
         if len(active_details) > 1:
-            active_phrase = "is " + ", ".join(active_details[:-1]) + ", and " + active_details[-1]
+            active_phrase = ", ".join(active_details[:-1]) + ", and " + active_details[-1]
         else:
-            active_phrase = "is " + active_details[0]
+            active_phrase = active_details[0]
     else:
         active_phrase = ""
 
@@ -189,11 +189,11 @@ def generate_reasoning(row: pd.Series) -> str:
         if location_phrase:
             loc_avail.append(location_phrase)
         if avail_phrase:
-            loc_avail.append(f"is {avail_phrase}")
+            loc_avail.append(avail_phrase)
         if loc_avail:
-            sentence += " They " + " and ".join(loc_avail) + "."
+            sentence += " They are " + " and ".join(loc_avail) + "."
         if active_phrase:
-            sentence += f" Additionally, they {active_phrase}."
+            sentence += f" Additionally, they are {active_phrase}."
     elif h == 1:
         # Style 1: Technical alignment focus
         sentence = f"Highly aligned on our technical requirements, matching {hard_skills} core skills ({skills_phrase}). Spent {yoe:.1f} years {title_phrase} {company_phrase} and displays {pedigree_phrase}."
@@ -202,7 +202,7 @@ def generate_reasoning(row: pd.Series) -> str:
         if location_phrase:
             sentence += f" Location-wise, they are {location_phrase}."
         if active_phrase:
-            sentence += f" On the platform, they {active_phrase}."
+            sentence += f" On the platform, they are {active_phrase}."
     elif h == 2:
         # Style 2: Career progression focus
         sentence = f"An impressive {yoe:.1f}-year engineering career, specializing in AI/ML {title_phrase} {company_phrase}. Demonstrates {pedigree_phrase} and matches {hard_skills} JD skills ({skills_phrase})."
@@ -210,11 +210,11 @@ def generate_reasoning(row: pd.Series) -> str:
         if location_phrase:
             loc_avail.append(location_phrase)
         if avail_phrase:
-            loc_avail.append(f"is {avail_phrase}")
+            loc_avail.append(avail_phrase)
         if loc_avail:
-            sentence += " They " + " and ".join(loc_avail) + "."
+            sentence += " They are " + " and ".join(loc_avail) + "."
         if active_phrase:
-            sentence += f" Recruiter signal: candidate {active_phrase}."
+            sentence += f" Recruiter signal: candidate is {active_phrase}."
     else:
         # Style 3: Founding team focus
         sentence = f"Excellent founding-engineer profile with {yoe:.1f} years in applied ML, recently working {company_phrase} {title_phrase}. Well-matched on {hard_skills} skills like {skills_phrase}, combined with {pedigree_phrase}."
@@ -223,7 +223,7 @@ def generate_reasoning(row: pd.Series) -> str:
         if location_phrase:
             sentence += f" Currently {location_phrase}."
         if active_phrase:
-            sentence += f" Recruiter signals show they {active_phrase}."
+            sentence += f" Recruiter signals show they are {active_phrase}."
 
     # Clean double spaces/periods
     sentence = sentence.replace("..", ".").replace(" .", ".").replace(" ,", ",").replace("  ", " ").strip()
