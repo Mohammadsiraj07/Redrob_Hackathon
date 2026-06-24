@@ -23,6 +23,7 @@ Template fallback is used automatically if any API call fails.
 
 import argparse
 import json
+import re
 import time
 from pathlib import Path
 
@@ -169,6 +170,9 @@ def clean_llm_output(text: str) -> str:
         result = '. '.join(clean_sentences)
         if not result.endswith('.'):
             result += '.'
+        # Fix broken decimals and URLs: "7. 2" → "7.2", "Verloop. io" → "Verloop.io"
+        result = re.sub(r'(\d+)\.\s+(\d)', r'\1.\2', result)
+        result = re.sub(r'(\w+)\.\s+(io|ai|com|org|in|edu)\b', r'\1.\2', result)
         return result
     return text  # fallback: return original if everything got filtered
 
