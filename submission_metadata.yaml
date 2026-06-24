@@ -44,14 +44,17 @@ compute:
 ai_tools_used:
   - "Claude (Anthropic) -- Challenge brainstorming, Clear Planning, Approach, Architecture design, Debugging"
   - "Antigravity(Google DeepMind) -- Implementation, Testing and Deployment"
+  - "Groq (Llama 3.3 70B) -- Offline reasoning string generation for top-100 candidates via reasoning_generator.py"
 
 ai_usage_summary: |
   Collaborated with Claude (Anthropic) for challenge brainstorming, clear project planning,
   overall approach conceptualization, architecture design, and debugging.
   Used Google DeepMind's Antigravity assistant for physical code implementation, local testing,
   and deployment to GitHub and HuggingFace Spaces.
-  No candidate data was shared with external LLM APIs during the ranking phase, ensuring full compliance
-  with the CPU/memory constraints of the environment.
+  Used Groq's hosted Llama 3.3 70B model to generate natural recruiter-quality reasoning strings
+  for the top 100 ranked candidates (100 offline API calls via src/reasoning_generator.py).
+  No candidate data was shared with external LLM APIs during the ranking phase itself;
+  LLM reasoning is a post-ranking enhancement step run offline before submission.
 
 # ============================================================================
 # Approach summary
@@ -64,6 +67,10 @@ methodology_summary: |
   weighted linear combination of normalized features (skill_match 40%, career_quality
   25%, behavioral 20%, availability 10%, location 5%) with honeypot cap at 0.05.
 
+  Post-ranking: reasoning_generator.py calls Groq-hosted Llama 3.3 70B to generate
+  natural, recruiter-quality hiring arguments for each of the top 100 candidates,
+  replacing template-based reasoning with specific career and skill references.
+
   Key design choices:
   - Proficiency-weighted skill matching (expert x3, advanced x2) prevents naive
     keyword-count inflation
@@ -72,7 +79,7 @@ methodology_summary: |
   - Honeypot detection: 5 explicit rules (impossible tenure, expert/zero-duration,
     non-tech title + AI skills, all-expert skills, too-many-skills/low-YoE)
   - No LLM calls at inference time, ensuring <5 min CPU reproducibility
-  - Reasoning strings are candidate-specific, generated from extracted feature values
+  - LLM reasoning is an offline post-ranking step (100 API calls, ~3 minutes)
 
 # ============================================================================
 # Declarations

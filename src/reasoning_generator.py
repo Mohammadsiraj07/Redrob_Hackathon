@@ -1,4 +1,4 @@
-﻿"""
+"""
 reasoning_generator.py -- LLM-powered reasoning for top-100 candidates.
 Reads submission.csv + features.parquet + candidates.jsonl, calls an LLM API
 to replace template reasoning strings with natural recruiter-quality arguments.
@@ -32,10 +32,11 @@ import requests
 # --- Default configuration ---------------------------------------------------
 
 DEFAULT_API_BASE = "https://api.groq.com/openai/v1"
-DEFAULT_MODEL    = "llama-3.1-70b-versatile"
+DEFAULT_MODEL    = "llama-3.3-70b-versatile"
+FALLBACK_MODEL   = "llama-3.1-8b-instant"
 MAX_TOKENS       = 200      # ~80 words + safety margin
 TEMPERATURE      = 0.4      # low for consistent, factual output
-RATE_LIMIT_SLEEP = 0.6      # seconds between calls (Groq free tier: 30 RPM)
+RATE_LIMIT_SLEEP = 1.5      # seconds between calls (Groq free tier: 30 RPM)
 MAX_RETRIES      = 3
 RETRY_SLEEP      = 5
 
@@ -120,31 +121,72 @@ Platform assessment: {row.get('assessment_score', 0):.0%}
 
 INSTRUCTIONS:
 - Write exactly 2-3 sentences (60-90 words)
-- Make a specific HIRING ARGUMENT -- reference their actual companies, projects, metrics, skills
-- Tell the hiring manager WHY to prioritise this candidate for a founding AI engineer role
+- Make a specific HIRING ARGUMENT -- reference their actual companies, projects, metrics, and named technologies
+- Explain what makes their background uniquely valuable for THIS founding role
 - Do NOT start with "This candidate" or "The candidate"
+- Do NOT end with "Prioritizing this candidate..." or any variation
+- Do NOT use the words "crucial", "prioritize", "prioritise", or "prioritizing"
+- Do NOT use the phrase "skills like" -- name the skills directly
 - Do NOT use bullet points or numbered lists
 - Do NOT repeat the candidate ID
-- Sound like an experienced recruiter making a case, not a bot summarising a form
+- End with a specific technical insight about their fit, not a generic recommendation
+- Sound like an experienced recruiter who knows the tech stack, not a bot summarising a form
 
 Write only the reasoning, nothing else:"""
 
     return prompt
 
 
+# --- Post-processing cleanup -------------------------------------------------
+
+BANNED_PHRASES = [
+    "prioritizing this candidate",
+    "prioritising this candidate",
+    "this makes them a strong candidate",
+    "this makes them an ideal candidate",
+    "this makes them a top candidate",
+    "skills like ",
+]
+
+def clean_llm_output(text: str) -> str:
+    """Remove repetitive LLM closing patterns and banned phrases."""
+    if not text:
+        return text
+
+    # Split into sentences and filter out any containing banned phrases
+    sentences = [s.strip() for s in text.split('.') if s.strip()]
+    clean_sentences = []
+    for s in sentences:
+        s_lower = s.lower()
+        if any(b in s_lower for b in BANNED_PHRASES):
+            continue
+        # Also skip sentences that are just generic filler
+        if s_lower.startswith("overall") or s_lower.startswith("in summary"):
+            continue
+        clean_sentences.append(s)
+
+    if clean_sentences:
+        result = '. '.join(clean_sentences)
+        if not result.endswith('.'):
+            result += '.'
+        return result
+    return text  # fallback: return original if everything got filtered
+
+
 # --- API call ----------------------------------------------------------------
 
-def call_llm(prompt: str, api_base: str, api_key: str, model: str):
+def call_llm(prompt: str, api_base: str, api_key: str, model: str, fallback_model: str = FALLBACK_MODEL):
     url     = f"{api_base.rstrip('/')}/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    payload = {
-        "model":       model,
-        "messages":    [{"role": "user", "content": prompt}],
-        "max_tokens":  MAX_TOKENS,
-        "temperature": TEMPERATURE,
-    }
-
+    
+    # Try with primary model first
     for attempt in range(1, MAX_RETRIES + 1):
+        payload = {
+            "model":       model,
+            "messages":    [{"role": "user", "content": prompt}],
+            "max_tokens":  MAX_TOKENS,
+            "temperature": TEMPERATURE,
+        }
         try:
             resp = requests.post(url, headers=headers, json=payload, timeout=30)
             resp.raise_for_status()
@@ -157,15 +199,49 @@ def call_llm(prompt: str, api_base: str, api_key: str, model: str):
         except requests.exceptions.HTTPError as e:
             if resp.status_code == 429:
                 wait = RETRY_SLEEP * attempt
-                print(f"\n    [rate-limit] waiting {wait}s...", end="", flush=True)
+                retry_after = resp.headers.get("Retry-After")
+                if retry_after:
+                    try:
+                        wait = float(retry_after) + 1.0
+                    except ValueError:
+                        pass
+                else:
+                    reset_tokens = resp.headers.get("x-ratelimit-reset-tokens")
+                    if reset_tokens:
+                        try:
+                            wait = float(reset_tokens.rstrip('s')) + 1.0
+                        except ValueError:
+                            pass
+                print(f"\n    [rate-limit 429] waiting {wait:.1f}s...", end="", flush=True)
                 time.sleep(wait)
             else:
                 print(f"\n    [HTTP {resp.status_code}] {e}")
-                return None
+                break
         except Exception as e:
             print(f"\n    [error attempt {attempt}] {e}")
             if attempt < MAX_RETRIES:
                 time.sleep(RETRY_SLEEP)
+
+    # Fallback to secondary model if primary model fails
+    if fallback_model and model != fallback_model:
+        print(f"\n    [fallback-model] attempting with {fallback_model}...", end="", flush=True)
+        payload = {
+            "model":       fallback_model,
+            "messages":    [{"role": "user", "content": prompt}],
+            "max_tokens":  MAX_TOKENS,
+            "temperature": TEMPERATURE,
+        }
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"].strip()
+            for prefix in ["Reasoning:", "Answer:", "Response:", "Recommendation:"]:
+                if text.lower().startswith(prefix.lower()):
+                    text = text[len(prefix):].strip()
+            return text
+        except Exception as e:
+            print(f" failed: {e}", end="", flush=True)
+
     return None
 
 
@@ -238,6 +314,7 @@ def main():
         llm_text = call_llm(prompt, args.api_base, args.api_key, args.model)
 
         if llm_text and len(llm_text.split()) >= 20:
+            llm_text = clean_llm_output(llm_text)
             sub_df.at[i, "reasoning"] = llm_text
             updated += 1
             print(f"OK ({len(llm_text.split())} words)")
