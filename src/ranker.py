@@ -111,16 +111,42 @@ def generate_reasoning(row: pd.Series) -> str:
     else:
         company_phrase = f"at {company}"
 
+    # Proper display names for ML acronyms (override .title() behaviour)
+    SKILL_DISPLAY_NAMES = {
+        "bge": "BGE", "e5": "E5", "rag": "RAG", "nlp": "NLP", "llm": "LLM",
+        "faiss": "FAISS", "ndcg": "NDCG", "mrr": "MRR", "map": "MAP",
+        "lora": "LoRA", "bert": "BERT", "gpt": "GPT", "openai": "OpenAI",
+        "sentence-transformers": "Sentence-Transformers",
+        "sentence transformers": "Sentence-Transformers",
+        "huggingface": "HuggingFace", "a/b testing": "A/B Testing",
+        "ab testing": "A/B Testing", "vector database": "Vector Database",
+        "vector db": "Vector DB", "hybrid search": "Hybrid Search",
+        "semantic search": "Semantic Search", "retrieval": "Retrieval",
+        "ranking": "Ranking", "reranking": "Reranking",
+        "fine-tuning": "Fine-Tuning", "fine tuning": "Fine-Tuning",
+        "finetuning": "Fine-Tuning", "information retrieval": "Information Retrieval",
+        "recommendation system": "Recommendation System",
+        "natural language processing": "Natural Language Processing",
+        "retrieval augmented generation": "Retrieval Augmented Generation",
+        "large language model": "Large Language Model", "production ml": "Production ML",
+        "bi-encoder": "Bi-Encoder", "cross-encoder": "Cross-Encoder",
+    }
+
     # Skills phrase
     if matched_skills and matched_skills != "nan":
-        clean_skills = [s.strip().title() for s in matched_skills.split(",") if s.strip()][:3]
+        raw_skills = [s.strip() for s in matched_skills.split(",") if s.strip()][:3]
+        clean_skills = [SKILL_DISPLAY_NAMES.get(s.lower(), s.title()) for s in raw_skills]
         if len(clean_skills) > 1:
-            skills_phrase = f"including {', '.join(clean_skills[:-1])} and {clean_skills[-1]}"
+            skills_list = ', '.join(clean_skills[:-1]) + ' and ' + clean_skills[-1]
+            skills_phrase = f"including {skills_list}"
         elif len(clean_skills) == 1:
-            skills_phrase = f"including {clean_skills[0]}"
+            skills_list = clean_skills[0]
+            skills_phrase = f"including {skills_list}"
         else:
+            skills_list = "core AI concepts"
             skills_phrase = "across core AI concepts"
     else:
+        skills_list = "foundational ML and Python systems"
         skills_phrase = "across foundational ML and Python systems"
 
     # Pedigree phrase
@@ -185,13 +211,10 @@ def generate_reasoning(row: pd.Series) -> str:
     if h == 0:
         # Style 0: Strong recommendation focus
         sentence = f"Strong hiring recommendation for our founding team. Candidate brings {yoe:.1f} years of applied ML experience, highlighted by their role {company_phrase} {title_phrase}. Matches {hard_skills} core JD skills ({skills_phrase}), backed by {pedigree_phrase}."
-        loc_avail = []
         if location_phrase:
-            loc_avail.append(location_phrase)
+            sentence += f" They are {location_phrase}."
         if avail_phrase:
-            loc_avail.append(avail_phrase)
-        if loc_avail:
-            sentence += " They are " + " and ".join(loc_avail) + "."
+            sentence += f" Currently {avail_phrase}."
         if active_phrase:
             sentence += f" Additionally, they are {active_phrase}."
     elif h == 1:
@@ -206,18 +229,15 @@ def generate_reasoning(row: pd.Series) -> str:
     elif h == 2:
         # Style 2: Career progression focus
         sentence = f"An impressive {yoe:.1f}-year engineering career, specializing in AI/ML {title_phrase} {company_phrase}. Demonstrates {pedigree_phrase} and matches {hard_skills} JD skills ({skills_phrase})."
-        loc_avail = []
         if location_phrase:
-            loc_avail.append(location_phrase)
+            sentence += f" They are {location_phrase}."
         if avail_phrase:
-            loc_avail.append(avail_phrase)
-        if loc_avail:
-            sentence += " They are " + " and ".join(loc_avail) + "."
+            sentence += f" Currently {avail_phrase}."
         if active_phrase:
             sentence += f" Recruiter signal: candidate is {active_phrase}."
     else:
         # Style 3: Founding team focus
-        sentence = f"Excellent founding-engineer profile with {yoe:.1f} years in applied ML, recently working {company_phrase} {title_phrase}. Well-matched on {hard_skills} skills like {skills_phrase}, combined with {pedigree_phrase}."
+        sentence = f"Excellent founding-engineer profile with {yoe:.1f} years in applied ML, recently working {company_phrase} {title_phrase}. Well-matched on {hard_skills} core JD skills, particularly {skills_list}, combined with {pedigree_phrase}."
         if avail_phrase:
             sentence += f" They are {avail_phrase}."
         if location_phrase:

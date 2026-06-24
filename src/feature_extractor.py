@@ -454,7 +454,15 @@ def get_matched_skills_list(candidate: dict) -> str:
     for hs in HARD_SKILLS:
         if hs.lower() in all_text:
             matched.append(hs)
-    return ", ".join(matched[:5]) # keep top 5 matched skills
+    # Deduplicate by normalising skill names (handles "sentence-transformers" vs "sentence transformers")
+    seen_normalized = set()
+    deduped = []
+    for skill in matched:
+        norm = skill.lower().replace("-", " ").replace("_", " ").strip()
+        if norm not in seen_normalized:
+            seen_normalized.add(norm)
+            deduped.append(skill)
+    return ", ".join(deduped[:5])  # keep top 5 unique matched skills
 
 
 def get_top_employers(candidate: dict) -> str:
