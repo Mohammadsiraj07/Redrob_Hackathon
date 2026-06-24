@@ -37,7 +37,7 @@ DEFAULT_MODEL    = "llama-3.3-70b-versatile"
 FALLBACK_MODEL   = "llama-3.1-8b-instant"
 MAX_TOKENS       = 200      # ~80 words + safety margin
 TEMPERATURE      = 0.4      # low for consistent, factual output
-RATE_LIMIT_SLEEP = 1.5      # seconds between calls (Groq free tier: 30 RPM)
+RATE_LIMIT_SLEEP = 3.0      # seconds between calls (Groq free tier: 30 RPM)
 MAX_RETRIES      = 3
 RETRY_SLEEP      = 5
 
@@ -124,7 +124,8 @@ INSTRUCTIONS:
 - Write exactly 2-3 sentences (60-90 words)
 - Make a specific HIRING ARGUMENT -- reference their actual companies, projects, metrics, and named technologies
 - Explain what makes their background uniquely valuable for THIS founding role
-- Do NOT start with "This candidate" or "The candidate"
+- Do NOT start with "This candidate", "The candidate", "Redrob AI", "With" or "Given" (or any variation starting with these words/phrases)
+- Vary your opening: start directly with the company name, the specific project, or the candidate's strongest signal (e.g. "At Swiggy, this engineer...", "Rebuilding a recommendation system at Microsoft...", "An IIT Delhi alumnus...", "Having shipped a search pipeline at Uber...")
 - Do NOT end with "Prioritizing this candidate..." or any variation
 - Do NOT use the words "crucial", "prioritize", "prioritise", or "prioritizing"
 - Do NOT use the phrase "skills like" -- name the skills directly
@@ -315,13 +316,44 @@ def main():
             print(f"\n{'='*70}\n{prompt}\n{'='*70}\n")
             continue
 
-        llm_text = call_llm(prompt, args.api_base, args.api_key, args.model)
+        llm_text = None
+        for try_idx in range(1, 4):
+            raw_text = call_llm(prompt, args.api_base, args.api_key, args.model)
+            if not raw_text:
+                time.sleep(2)
+                continue
+            
+            cleaned = clean_llm_output(raw_text)
+            if cleaned and len(cleaned.split()) >= 40:
+                lower_text = cleaned.strip().lower()
+                first_word = lower_text.split()[0] if lower_text.split() else ""
+                
+                # Check for banned starting words
+                has_banned_start = (first_word in ("with", "given", "redrob") or 
+                                    lower_text.startswith(("this candidate", "the candidate")))
+                
+                # Check for banned words/phrases anywhere in the text
+                banned_words = ["crucial", "prioritize", "prioritise", "prioritizing", "skills like"]
+                has_banned_words = any(w in lower_text for w in banned_words)
+                
+                if not has_banned_start and not has_banned_words:
+                    llm_text = cleaned
+                    break
+                else:
+                    if has_banned_start:
+                        print(f"[banned-start-retry-{try_idx}]", end=" ", flush=True)
+                    if has_banned_words:
+                        print(f"[banned-words-retry-{try_idx}]", end=" ", flush=True)
+            else:
+                print(f"[too-short-retry-{try_idx}]", end=" ", flush=True)
+            time.sleep(1)
 
-        if llm_text and len(llm_text.split()) >= 40:
-            llm_text = clean_llm_output(llm_text)
+        if llm_text:
             sub_df.at[i, "reasoning"] = llm_text
             updated += 1
             print(f"OK ({len(llm_text.split())} words)")
+            if not args.dry_run:
+                sub_df.to_csv(args.out, index=False)
         else:
             failed += 1
             print("FALLBACK (template kept)")
