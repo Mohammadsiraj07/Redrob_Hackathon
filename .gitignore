@@ -33,3 +33,6 @@ Thumbs.db
 sample_submission.csv
 sample_features.parquet
 sample_candidates.jsonl
+
+# Binary presentation files (use Xet for HuggingFace)
+*.pdf
