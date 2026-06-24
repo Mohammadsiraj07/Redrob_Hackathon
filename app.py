@@ -394,6 +394,7 @@ def process_data(file_content, jd_input_text):
             "last_active_date": c.get("redrob_signals", {}).get("last_active_date", ""),
             "willing_to_relocate": c.get("redrob_signals", {}).get("willing_to_relocate", False),
             "github_activity_score": c.get("redrob_signals", {}).get("github_activity_score", -1),
+            "profile_completeness_score": c.get("redrob_signals", {}).get("profile_completeness_score", 50),
             "interview_completion_rate": c.get("redrob_signals", {}).get("interview_completion_rate", 0),
             "candidate_raw": c  # Store raw candidate dict for profiling
         }
@@ -430,6 +431,14 @@ def process_data(file_content, jd_input_text):
         df.loc[hp_mask, "final_score"] = df.loc[hp_mask, "final_score"].clip(0, honeypot_cap)
 
     # Add a micro-tiebreaker that uses additional signals to eliminate ties
+    # Guard: ensure columns exist (some signals may not be extracted in all code paths)
+    if "profile_completeness_score" not in df.columns:
+        df["profile_completeness_score"] = 50  # neutral default
+    if "github_activity_score" not in df.columns:
+        df["github_activity_score"] = 0
+    if "recruiter_response_rate" not in df.columns:
+        df["recruiter_response_rate"] = 0
+
     df["tiebreaker"] = (
         df["github_activity_score"].clip(0, 100) / 100 * 0.0005
         + df["profile_completeness_score"].clip(0, 100) / 100 * 0.0003
