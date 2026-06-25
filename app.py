@@ -249,6 +249,62 @@ st.markdown("""
         animation: radial-grow 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
+    /* Premium Global Full-Screen Loading Overlay */
+    div[data-testid="stStatusWidget"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: rgba(5, 13, 24, 0.8) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Hide default Streamlit status elements inside the widget */
+    div[data-testid="stStatusWidget"] > div {
+        display: none !important;
+    }
+
+    /* Render a premium custom loading spinner in the center of the screen */
+    div[data-testid="stStatusWidget"]::before {
+        content: "" !important;
+        width: 64px !important;
+        height: 64px !important;
+        border: 4px solid rgba(99, 102, 241, 0.1) !important;
+        border-top: 4px solid #6366f1 !important;
+        border-radius: 50% !important;
+        animation: spin-loader 1s linear infinite !important;
+        position: absolute !important;
+    }
+
+    /* Add a clean, pulsing recruiter intelligence loading message */
+    div[data-testid="stStatusWidget"]::after {
+        content: "Recalibrating Recruiter Intelligence..." !important;
+        position: absolute !important;
+        margin-top: 100px !important;
+        color: #f1f5f9 !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.05em !important;
+        animation: pulse-loader 1.5s ease-in-out infinite !important;
+    }
+
+    @keyframes spin-loader {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse-loader {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
