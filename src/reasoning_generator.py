@@ -123,15 +123,15 @@ Platform assessment: {row.get('assessment_score', 0):.0%}
 INSTRUCTIONS:
 - Write exactly 2-3 sentences (60-90 words)
 - Make a specific HIRING ARGUMENT -- reference their actual companies, projects, metrics, and named technologies
-- Explain what makes their background uniquely valuable for THIS founding role
+- Explain what makes their background valuable for THIS founding role
 - Do NOT start with "This candidate", "The candidate", "Redrob AI", "With" or "Given" (or any variation starting with these words/phrases)
 - Vary your opening: start directly with the company name, the specific project, or the candidate's strongest signal (e.g. "At Swiggy, this engineer...", "Rebuilding a recommendation system at Microsoft...", "An IIT Delhi alumnus...", "Having shipped a search pipeline at Uber...")
-- Do NOT end with "Prioritizing this candidate..." or any variation
+- Do NOT end with "Prioritizing this candidate...", "This background uniquely positions them...", "This background uniquely prepares them...", or any variation
 - Do NOT use the words "crucial", "prioritize", "prioritise", or "prioritizing"
-- Do NOT use the phrase "skills like" -- name the skills directly
+- Do NOT use the phrases "uniquely positions", "uniquely prepares", "uniquely valuable", "makes them an ideal fit", or "skills like"
 - Do NOT use bullet points or numbered lists
 - Do NOT repeat the candidate ID
-- End with a specific technical insight about their fit, not a generic recommendation
+- End with a specific, concrete technical insight or reason to interview this person, not a generic recommendation statement
 - Sound like an experienced recruiter who knows the tech stack, not a bot summarising a form
 
 Write only the reasoning, nothing else:"""
@@ -147,6 +147,10 @@ BANNED_PHRASES = [
     "this makes them a strong candidate",
     "this makes them an ideal candidate",
     "this makes them a top candidate",
+    "uniquely positions",
+    "uniquely prepares",
+    "uniquely valuable",
+    "ideal fit",
     "skills like ",
 ]
 
@@ -333,7 +337,10 @@ def main():
                                     lower_text.startswith(("this candidate", "the candidate")))
                 
                 # Check for banned words/phrases anywhere in the text
-                banned_words = ["crucial", "prioritize", "prioritise", "prioritizing", "skills like"]
+                banned_words = [
+                    "crucial", "prioritize", "prioritise", "prioritizing", "skills like",
+                    "uniquely positions", "uniquely prepares", "uniquely valuable", "ideal fit"
+                ]
                 has_banned_words = any(w in lower_text for w in banned_words)
                 
                 if not has_banned_start and not has_banned_words:
