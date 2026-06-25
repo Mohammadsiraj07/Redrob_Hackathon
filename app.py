@@ -254,7 +254,7 @@ st.markdown("""
 
 
 # ─── Sidebar Configuration ──────────────────────────────────────────────────
-st.sidebar.image("https://raw.githubusercontent.com/redrob-co/assets/main/logo.png", width=140)
+st.sidebar.image("https://framerusercontent.com/images/P13ScmdfVXHerKMDu5N1SkXKzE.png?width=3000&height=600", width=140)
 st.sidebar.title("Settings & Controls")
 
 # 1. Job Description text area
